@@ -23,7 +23,7 @@ write_files:
       REGION=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/dynamic/instance-identity/document | jq -r .region`
       export AWS_DEFAULT_REGION=$${REGION}
 
-      __MAC_ADDRESS__=$(curl -s http://${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ 2>/dev/null | head -n1 | awk '{print $1}')
+      __MAC_ADDRESS__=$(curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ 2>/dev/null | head -n1 | awk '{print $1}')
       __INSTANCE_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/instance-id`
       __SUBNET_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/$${__MAC_ADDRESS__}subnet-id`
       __ATTACHMENT_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --query "NetworkInterfaces[0].[Attachment][0].[AttachmentId]" | grep -o 'eni-attach-[a-z0-9]*' || echo '')
