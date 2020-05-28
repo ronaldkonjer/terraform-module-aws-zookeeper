@@ -27,22 +27,12 @@ write_files:
       __INSTANCE_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/instance-id`
       __SUBNET_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/$${__MAC_ADDRESS__}subnet-id`
       __ATTACHMENT_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --query "NetworkInterfaces[0].[Attachment][0].[AttachmentId]" | grep -o 'eni-attach-[a-z0-9]*' || echo '')
-      __ENI_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].NetworkInterfaceId" | grep -o 'eni-[a-z0-9]*')
-      __ENI_IP__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].PrivateIpAddress" | grep -o "[0-9\.]*")
+      __ENI_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Name,Values=${hostname}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].NetworkInterfaceId" | grep -o 'eni-[a-z0-9]*')
+      __ENI_IP__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Name,Values=${hostname}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].PrivateIpAddress" | grep -o "[0-9\.]*")
 
 
       echo "=== ADD counter to name ==="
-      ID=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .instanceId`
-      CURRENT_NAME=`aws ec2 describe-tags --filters Name=resource-id,Values=$${ID} Name=key,Values=Name --query Tags[].Value --output text | sed 's/[0-9,-]\+$//'`
-      COUNTER=1
-      for INSTANCE in $(aws autoscaling describe-auto-scaling-instances --query 'AutoScalingInstances[?AutoScalingGroupName!=`null`]|[?contains(AutoScalingGroupName, `${asg_name}`) == `true`].[InstanceId]'  --output text)
-      do
-        if [[ $${ID} == $INSTANCE ]]; then
-           aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="$${CURRENT_NAME}-$(printf "%02d" $${COUNTER})"
-        fi
-        COUNTER=$[$${COUNTER}+1]
-      done
-
+      aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="${hostname}-$(printf "%02d" $${COUNTER})"
 
       echo "=== Disabling source-dest-check ==="
       aws ec2 modify-instance-attribute --instance-id $${__INSTANCE_ID__} --no-source-dest-check &>/dev/null || echo "skipped"

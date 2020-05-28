@@ -145,9 +145,8 @@ data "template_file" "zookeeper_asg" {
   template = file("${path.module}/templates/cloud-config/init_asg.tpl")
   vars     = {
     domain         = var.domain
-    eni_reference  = "${var.prefix}${var.name}-${format("%02d", count.index + 1)}"
+    eni_reference  = "${var.prefix}${var.name}"
     hostname       = "${var.prefix}${var.name}-${format("%02d", count.index + 1)}"
-    asg_name       = "${var.prefix}${var.name}"
     service        = "zookeeper"
     metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)
