@@ -26,10 +26,14 @@ write_files:
       __MAC_ADDRESS__=$(curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ 2>/dev/null | head -n1 | awk '{print $1}')
       __INSTANCE_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/instance-id`
       __SUBNET_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/$${__MAC_ADDRESS__}subnet-id`
-      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key=='Name'].Value" | grep -o "[a-z0-9-\.]*")
+      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key==\`Name\`].Value" | grep -o "[a-z0-9\.-]*"")
 
-      export HOSTNAME=$$(__ENI_NAME__)
-      export FQDN="$${HOSTNAME}.${domain}"
+      HOSTNAME=$${__ENI_NAME__}
+      FQDN="$${HOSTNAME}.${domain}"
+
+      # Setup local vanity hostname
+      echo $${HOSTNAME} | sed 's/\.$//' > /etc/hostname
+      hostname `cat /etc/hostname`
 
       cat >/etc/hosts <<EOF
       # The following lines are desirable for IPv4 capable hosts
@@ -41,6 +45,7 @@ write_files:
       ::1 localhost.localdomain localhost
       ::1 localhost6.localdomain6 localhost6
       EOF
+
     path: /usr/local/bin/hostmod.sh
     permissions: '0755'
   - content: |
@@ -58,7 +63,7 @@ write_files:
       __ATTACHMENT_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --query "NetworkInterfaces[0].[Attachment][0].[AttachmentId]" | grep -o 'eni-attach-[a-z0-9]*' || echo '')
       __ENI_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].NetworkInterfaceId" | grep -o 'eni-[a-z0-9]*')
       __ENI_IP__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].PrivateIpAddress" | grep -o "[0-9\.]*")
-      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key=='Name'].Value" | grep -o "[a-z0-9-\.]*")
+      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key==\`Name\`].Value" | grep -o "[a-z0-9\.-]*")
 
       echo "=== ADD counter to name ==="
       aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="$${__ENI_NAME__}"
