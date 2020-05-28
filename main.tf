@@ -266,7 +266,7 @@ resource "aws_route53_record" "private" {
         replace(
           replace(
             replace(
-              format("%s", aws_network_interface.zookeeper.*.private_ips), "/[^\\s\\d\\.]/", "",
+              format("%", aws_network_interface.zookeeper.*.private_ips), "/[^\\s\\d\\.]/", "",
             ),
           "/(\\d)\\s+/", "$1,",
           ),
