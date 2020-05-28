@@ -33,10 +33,10 @@ variable "domain" {
   type        = string
 }
 
-variable "extra_security_group_id" {
-  description = "Extra security group to assign to the Apache Zookeeper instance(s) (e.g.: 'sg-3f983f98')."
+variable "extra_security_group_ids" {
+  description = "Extra security groups to assign to the Apache Zookeeper instance(s) (e.g.: ['sg-3f983f98'])."
   default     = ""
-  type        = string
+  type        = list(string)
 }
 
 variable "heap_size" {

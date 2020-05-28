@@ -24,7 +24,8 @@ data "aws_ami" "zookeeper" {
   }
   filter {
     name   = "name"
-    values = ["${var.ami_prefix}${var.ami_name}-*"]
+    values = [
+      "${var.ami_prefix}${var.ami_name}-*"]
   }
   filter {
     name   = "virtualization-type"
@@ -44,13 +45,19 @@ resource "aws_instance" "zookeeper" {
   key_name                    = var.keyname
   subnet_id                   = element(var.subnet_ids, count.index)
   user_data                   = element(data.template_file.zookeeper.*.rendered, count.index)
-  vpc_security_group_ids      = [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, var.extra_security_group_id]
+  vpc_security_group_ids      = flatten([
+    concat(
+    [var.extra_security_group_ids],
+    aws_security_group.zookeeper.id,
+    aws_security_group.zookeeper_intra.id
+    )])
+  //  [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   root_block_device {
     volume_size = var.root_volume_size
     volume_type = var.root_volume_type
     iops        = var.root_volume_iops
   }
-  tags = {
+  tags                        = {
     Name      = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
     Zookeeper = "true"
     Service   = "Zookeeper"
@@ -60,7 +67,7 @@ resource "aws_instance" "zookeeper" {
 data "template_file" "zookeeper" {
   count    = var.use_asg ? 0 : var.number_of_instances
   template = file("${path.module}/templates/cloud-config/init.tpl")
-  vars = {
+  vars     = {
     domain         = var.domain
     hostname       = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
     zookeeper_args = "-i ${count.index + 1} -n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : "-m var.heap_size"}"
@@ -70,7 +77,7 @@ data "template_file" "zookeeper" {
 data "template_file" "zookeeper_id" {
   count    = var.number_of_instances
   template = "$${index}:$${hostname}.$${domain}"
-  vars = {
+  vars     = {
     domain   = var.domain
     hostname = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
     index    = count.index + 1
@@ -118,7 +125,16 @@ resource "aws_launch_configuration" "zookeeper" {
   instance_type               = var.instance_type
   key_name                    = var.keyname
   name_prefix                 = "${var.prefix}${var.name}-"
-  security_groups             = [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, var.extra_security_group_id]
+  security_groups             = flatten([
+    concat(
+    [var.extra_security_group_ids],
+    aws_security_group.zookeeper.id,
+    aws_security_group.zookeeper_intra.id
+    )])
+  //  [
+  //    aws_security_group.zookeeper.id,
+  //    aws_security_group.zookeeper_intra.id,
+  //    flatten(var.extra_security_group_ids)]
   user_data                   = data.template_file.zookeeper_asg[0].rendered
   lifecycle {
     create_before_destroy = true
@@ -128,7 +144,7 @@ resource "aws_launch_configuration" "zookeeper" {
 data "template_file" "zookeeper_asg" {
   count    = var.use_asg ? 1 : 0
   template = file("${path.module}/templates/cloud-config/init_asg.tpl")
-  vars = {
+  vars     = {
     domain         = var.domain
     eni_reference  = "${var.prefix}${var.name}"
     hostname       = "${var.prefix}${var.name}"
@@ -140,27 +156,22 @@ data "template_file" "zookeeper_asg" {
 data "template_file" "zookeeper_asg_addr" {
   count    = var.use_asg ? var.number_of_instances : 0
   template = "$${index}:$${address}"
-  vars = {
+  vars     = {
     address = element(
       split(
         ",",
         replace(
           replace(
             replace(
-              format("%s", aws_network_interface.zookeeper.*.private_ips),
-              "/[^\\s\\d\\.]/",
-              "",
-            ),
-            "/(\\d)\\s+/",
-            "$1,",
+              format("%s", aws_network_interface.zookeeper.*.private_ips),"/[^\\s\\d\\.]/", "", ),
+          "/(\\d)\\s+/", "$1,",
           ),
-          "/\\s+/",
-          "",
+        "/\\s+/", "",
         ),
       ),
-      count.index,
+    count.index,
     )
-    index = count.index + 1
+    index   = count.index + 1
   }
 }
 
@@ -169,7 +180,7 @@ data "template_file" "zookeeper_asg_addr" {
 #
 
 resource "aws_iam_instance_profile" "zookeeper_eni" {
-  name  = "${var.prefix}${var.name}-zookeeper-eni"
+  name = "${var.prefix}${var.name}-zookeeper-eni"
   role = aws_iam_role.zookeeper_eni.id
 }
 
@@ -227,9 +238,14 @@ EOF
 resource "aws_network_interface" "zookeeper" {
   count             = var.use_asg ? var.number_of_instances : 0
   subnet_id         = element(var.subnet_ids, count.index)
-  security_groups   = [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, var.extra_security_group_id]
+  security_groups   = flatten([
+    concat(
+    [var.extra_security_group_ids],
+    aws_security_group.zookeeper.id,
+    )])
+  #[aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   source_dest_check = false
-  tags = {
+  tags              = {
     Name      = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
     Reference = "${var.prefix}${var.name}"
     Zookeeper = "true"
@@ -249,27 +265,24 @@ resource "aws_eip" "zookeeper" {
 #
 
 resource "aws_route53_record" "private" {
-  count = var.private_zone_id != "" ? var.number_of_instances : 0
-  name  = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
-  records = [var.use_asg ? element(
-    split(
-      ",",
-      replace(
+  count   = var.private_zone_id != "" ? var.number_of_instances : 0
+  name    = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
+  records = [
+    var.use_asg ? element(
+      split(
+        ",",
         replace(
           replace(
-            format("%s", aws_network_interface.zookeeper.*.private_ips),
-            "/[^\\s\\d\\.]/",
-            "",
+            replace(
+              format("%s", aws_network_interface.zookeeper.*.private_ips), "/[^\\s\\d\\.]/", "",
+            ),
+          "/(\\d)\\s+/", "$1,",
           ),
-          "/(\\d)\\s+/",
-          "$1,",
+        "/\\s+/", "",
         ),
-        "/\\s+/",
-        "",
       ),
-    ),
     count.index,
-  ) : element(aws_instance.zookeeper.*.private_ip, count.index)]
+    ) : element(aws_instance.zookeeper.*.private_ip, count.index)]
   ttl     = var.ttl
   type    = "A"
   zone_id = var.private_zone_id
@@ -278,7 +291,8 @@ resource "aws_route53_record" "private" {
 resource "aws_route53_record" "public" {
   count   = var.public_zone_id != "" && var.associate_public_ip_address ? var.number_of_instances : 0
   name    = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
-  records = [var.use_asg ? element(aws_eip.zookeeper.*.public_ip, count.index) : element(aws_instance.zookeeper.*.public_ip, count.index)]
+  records = [
+    var.use_asg ? element(aws_eip.zookeeper.*.public_ip, count.index) : element(aws_instance.zookeeper.*.public_ip, count.index)]
   ttl     = var.ttl
   type    = "A"
   zone_id = var.public_zone_id
@@ -300,7 +314,7 @@ resource "aws_security_group" "zookeeper" {
   lifecycle {
     create_before_destroy = true
   }
-  tags = {
+  tags   = {
     Name      = "${var.prefix}${var.name}"
     Zookeeper = "true"
     Service   = "Zookeeper"
@@ -331,7 +345,7 @@ resource "aws_security_group" "zookeeper_intra" {
   lifecycle {
     create_before_destroy = true
   }
-  tags = {
+  tags   = {
     Name      = "${var.prefix}${var.name}-intra"
     Zookeeper = "true"
     Service   = "Zookeeper"
@@ -350,7 +364,7 @@ resource "aws_security_group" "zookeeper_monit" {
   lifecycle {
     create_before_destroy = true
   }
-  tags = {
+  tags   = {
     Name      = "${var.prefix}${var.name}-monit"
     Zookeeper = "true"
     Service   = "Zookeeper"

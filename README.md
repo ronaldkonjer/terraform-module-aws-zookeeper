@@ -43,7 +43,7 @@ To register the instances FQDN on AWS Route53 service you need to set the
 - `ami_prefix` - The prefix of the AMI to use for the instance(s). See the [Apache Zookeeper AMI](#apache-zookeeper-ami) section for more information. *[default value: '']*
 - `associate_public_ip_address` - Associate a public IP address to the Apache Zookeeper instance(s). *[default value: false]*
 - `domain` - **[required]** The domain name to use for the Apache Zookeeper instance(s).
-- `extra_security_group_id` - Extra security group to assign to the Apache Zookeeper instance(s) (e.g.: 'sg-3f983f98'). *[default value: '']*
+- `extra_security_group_ids` - Extra security groups to assign to the Apache Zookeeper instance(s) (e.g.: ['sg-3f983f98']). *[default value: '[]']*
 - `heap_size` - The heap size for the Apache Zookeeper instance(s) (e.g.: '1G'). *[default value: '']*
 - `instance_type` - The type of instance to use for the Apache Zookeeper instance(s). *[default value: 't2.small']*
 - `keyname` - **[required]** The SSH key name to use for the Apache Zookeeper instance(s).
