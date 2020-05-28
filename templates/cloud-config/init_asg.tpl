@@ -17,22 +17,22 @@ write_files:
   - content: |
       #!/bin/bash
 
-      set -ex
+      set -x
       echo "=== Setting Variables ==="
       __AWS_METADATA_ADDR__="169.254.169.254"
       REGION=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/dynamic/instance-identity/document | jq -r .region`
-      export AWS_DEFAULT_REGION=${REGION}
+      export AWS_DEFAULT_REGION=$${REGION}
 
-      __MAC_ADDRESS__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ | awk '{print $1}'`
+      __MAC_ADDRESS__=$(curl -s http://${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ 2>/dev/null | head -n1 | awk '{print $1}')
       __INSTANCE_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/instance-id`
       __SUBNET_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/$${__MAC_ADDRESS__}subnet-id`
       __ATTACHMENT_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --query "NetworkInterfaces[0].[Attachment][0].[AttachmentId]" | grep -o 'eni-attach-[a-z0-9]*' || echo '')
-      __ENI_ID__=$(aws ec2 describe-network-interfaces --filters "Name=status,Values=available" "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].NetworkInterfaceId" | grep -o 'eni-[a-z0-9]*')
-      __ENI_IP__=$(aws ec2 describe-network-interfaces --filters "Name=status,Values=available" "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].PrivateIpAddress" | grep -o "[0-9\.]*")
+      __ENI_ID__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].NetworkInterfaceId" | grep -o 'eni-[a-z0-9]*')
+      __ENI_IP__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].PrivateIpAddress" | grep -o "[0-9\.]*")
 
 
       echo "=== ADD counter to name ==="
-      ID=`curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .instanceId`
+      ID=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .instanceId`
       CURRENT_NAME=`aws ec2 describe-tags --filters Name=resource-id,Values=$${ID} Name=key,Values=Name --query Tags[].Value --output text | sed 's/[0-9,-]\+$//'`
       COUNTER=1
       for INSTANCE in $(aws autoscaling describe-auto-scaling-instances --query 'AutoScalingInstances[?AutoScalingGroupName!=`null`]|[?contains(AutoScalingGroupName, `${asg_name}`) == `true`].[InstanceId]'  --output text)
@@ -55,7 +55,7 @@ write_files:
 
       echo "=== Setting up Apache Zookeeper Instance ==="
       echo "  instance: ${hostname}.${domain}"
-      sudo /usr/local/bin/zookeeper_config -i $$(echo '${zookeeper_addr}' | sed -r -n -e "s/.*(([0-9]+):$${__ENI_IP__}).*/\2/p" ) ${zookeeper_args} -E -S -W 60
+      sudo /usr/local/bin/zookeeper_config -i $(echo '${zookeeper_addr}' | sed -r -n -e "s/.*(([0-9]+):$${__ENI_IP__}).*/\2/p" ) ${zookeeper_args} -E -S -W 60
 
       echo "=== All Done ==="
 

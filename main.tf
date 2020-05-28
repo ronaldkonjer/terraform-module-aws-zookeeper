@@ -16,7 +16,7 @@
 
 data "aws_ami" "zookeeper" {
   most_recent = true
-//  name_regex  = "^${var.prefix}${var.name}-.*-(\\d{14})$"
+  //  name_regex  = "^${var.prefix}${var.name}-.*-(\\d{14})$"
   owners      = ["self"]
   filter {
     name   = "architecture"
@@ -24,12 +24,12 @@ data "aws_ami" "zookeeper" {
   }
   filter {
     name   = "name"
-    values = [
-      "${var.ami_prefix}${var.ami_name}-*"]
+    values = ["${var.ami_prefix}${var.ami_name}-*"]
   }
   filter {
     name   = "virtualization-type"
-    values = ["hvm"]
+    values = [
+      "hvm"]
   }
 }
 
@@ -46,10 +46,12 @@ resource "aws_instance" "zookeeper" {
   subnet_id                   = element(var.subnet_ids, count.index)
   user_data                   = element(data.template_file.zookeeper.*.rendered, count.index)
 
-  vpc_security_group_ids      = compact(concat([aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
-//  vpc_security_group_ids      = join(var.extra_security_group_ids, aws_security_group.zookeeper.id,
-//                                  aws_security_group.zookeeper_intra.id
-//                                )
+  vpc_security_group_ids = compact(concat([
+    aws_security_group.zookeeper.id,
+    aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
+  //  vpc_security_group_ids      = join(var.extra_security_group_ids, aws_security_group.zookeeper.id,
+  //                                  aws_security_group.zookeeper_intra.id
+  //                                )
 
   //  [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   root_block_device {
@@ -57,7 +59,7 @@ resource "aws_instance" "zookeeper" {
     volume_type = var.root_volume_type
     iops        = var.root_volume_iops
   }
-  tags                        = {
+  tags = {
     Name      = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
     Zookeeper = "true"
     Service   = "Zookeeper"
@@ -125,7 +127,9 @@ resource "aws_launch_configuration" "zookeeper" {
   instance_type               = var.instance_type
   key_name                    = var.keyname
   name_prefix                 = "${var.prefix}${var.name}-"
-  security_groups             = compact(concat([aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
+  security_groups             = compact(concat([
+    aws_security_group.zookeeper.id,
+    aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
   //  [
   //    aws_security_group.zookeeper.id,
   //    aws_security_group.zookeeper_intra.id,
@@ -143,6 +147,9 @@ data "template_file" "zookeeper_asg" {
     domain         = var.domain
     eni_reference  = "${var.prefix}${var.name}"
     hostname       = "${var.prefix}${var.name}"
+    asg_name       = "${var.prefix}${var.name}"
+    service        = "zookeeper"
+    metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)
     zookeeper_args = "-n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : "-m var.heap_size"}"
   }
@@ -153,8 +160,8 @@ data "template_file" "zookeeper_asg_addr" {
   template = "$${index}:$${address}"
   vars     = {
     address = element(
-      split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
-      count.index,
+    split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
+    count.index,
     )
     index   = count.index + 1
   }
@@ -198,6 +205,7 @@ resource "aws_iam_role_policy" "zookeeper_eni" {
   "Statement": [
     {
       "Action": [
+        "ec2:*",
         "ec2:AttachNetworkInterface",
         "ec2:CreateNetworkInterface",
         "ec2:DeleteNetworkInterface",
@@ -205,7 +213,12 @@ resource "aws_iam_role_policy" "zookeeper_eni" {
         "ec2:DescribeNetworkInterfaces",
         "ec2:DetachNetworkInterface",
         "ec2:ModifyInstanceAttribute",
-        "ec2:ModifyNetworkInterfaceAttribute"
+        "ec2:ModifyNetworkInterfaceAttribute",
+        "ec2:AttachVolume",
+        "ssm:GetDocument",
+        "ec2:DetachVolume",
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances"
       ],
       "Effect": "Allow",
       "Resource": "*"
@@ -224,7 +237,8 @@ resource "aws_network_interface" "zookeeper" {
   count             = var.use_asg ? var.number_of_instances : 0
   subnet_id         = element(var.subnet_ids, count.index)
   #security_groups   = join(var.extra_security_group_ids, aws_security_group.zookeeper.id)
-  security_groups   = compact(concat([aws_security_group.zookeeper.id], var.extra_security_group_ids))
+  security_groups   = compact(concat([
+    aws_security_group.zookeeper.id], var.extra_security_group_ids))
   #[aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   source_dest_check = false
   tags              = {
@@ -237,7 +251,8 @@ resource "aws_network_interface" "zookeeper" {
 
 resource "aws_eip" "zookeeper" {
   count             = var.use_asg && var.associate_public_ip_address ? var.number_of_instances : 0
-  depends_on        = [aws_network_interface.zookeeper]
+  depends_on        = [
+    aws_network_interface.zookeeper]
   network_interface = element(aws_network_interface.zookeeper.*.id, count.index)
   vpc               = true
 }
@@ -251,8 +266,8 @@ resource "aws_route53_record" "private" {
   name    = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
   records = [
     var.use_asg ? element(
-      split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
-      count.index,
+    split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
+    count.index,
     ) : element(aws_instance.zookeeper.*.private_ip, count.index)]
   ttl     = var.ttl
   type    = "A"
@@ -311,7 +326,8 @@ resource "aws_security_group" "zookeeper_intra" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [
+      "0.0.0.0/0"]
   }
   lifecycle {
     create_before_destroy = true
