@@ -34,9 +34,9 @@ write_files:
       echo "  instance: ${hostname}.${domain}"
       sudo /usr/local/bin/zookeeper_config -i $$(echo '${zookeeper_addr}' | sed -r -n -e "s/.*(([0-9]+):$${__ENI_IP__}).*/\2/p" ) ${zookeeper_args} -E -S -W 60
       echo "=== All Done ==="
-    path: /tmp/setup_zookeeper.sh
+    path: /tmp/setup_zookeeper_asg.sh
     permissions: '0755'
 
 runcmd:
-  - /tmp/setup_zookeeper.sh
-  - rm /tmp/setup_zookeeper.sh
+  - /tmp/setup_zookeeper_asg.sh
+  #- rm /tmp/setup_zookeeper_asg.sh

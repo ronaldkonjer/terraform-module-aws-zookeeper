@@ -24,4 +24,4 @@ write_files:
 
 runcmd:
   - /tmp/setup_zookeeper.sh
-  - rm /tmp/setup_zookeeper.sh
+  #- rm /tmp/setup_zookeeper.sh

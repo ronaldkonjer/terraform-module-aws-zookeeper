@@ -153,18 +153,8 @@ data "template_file" "zookeeper_asg_addr" {
   template = "$${index}:$${address}"
   vars     = {
     address = element(
-      split(
-        ",",
-        replace(
-          replace(
-            replace(
-              format("%s", aws_network_interface.zookeeper.*.private_ips),"/[^\\s\\d\\.]/", "", ),
-          "/(\\d)\\s+/", "$1,",
-          ),
-        "/\\s+/", "",
-        ),
-      ),
-    count.index,
+      split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
+      count.index,
     )
     index   = count.index + 1
   }
@@ -261,19 +251,8 @@ resource "aws_route53_record" "private" {
   name    = "${var.prefix}${var.name}${format("%02d", count.index + 1)}"
   records = [
     var.use_asg ? element(
-      split(
-        ",",
-        replace(
-          replace(
-            replace(
-              format("%", aws_network_interface.zookeeper.*.private_ips), "/[^\\s\\d\\.]/", "",
-            ),
-          "/(\\d)\\s+/", "$1,",
-          ),
-        "/\\s+/", "",
-        ),
-      ),
-    count.index,
+      split(",", format("%s", join(",", flatten(aws_network_interface.zookeeper.*.private_ips)))),
+      count.index,
     ) : element(aws_instance.zookeeper.*.private_ip, count.index)]
   ttl     = var.ttl
   type    = "A"
