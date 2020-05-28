@@ -32,7 +32,7 @@ write_files:
 
 
       echo "=== ADD counter to name ==="
-      aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="${hostname}-$(printf "%02d" $${COUNTER})"
+      aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="${hostname}"
 
       echo "=== Disabling source-dest-check ==="
       aws ec2 modify-instance-attribute --instance-id $${__INSTANCE_ID__} --no-source-dest-check &>/dev/null || echo "skipped"
