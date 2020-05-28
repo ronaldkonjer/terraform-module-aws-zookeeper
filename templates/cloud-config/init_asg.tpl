@@ -26,7 +26,7 @@ write_files:
       __MAC_ADDRESS__=$(curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/ 2>/dev/null | head -n1 | awk '{print $1}')
       __INSTANCE_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/instance-id`
       __SUBNET_ID__=`curl -s http://$${__AWS_METADATA_ADDR__}/latest/meta-data/network/interfaces/macs/$${__MAC_ADDRESS__}subnet-id`
-      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key==\`Name\`].Value" | grep -o "[a-z0-9\.-]*"")
+      __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key==\`Name\`].Value" | grep -o "[a-z0-9\.-]*")
 
       HOSTNAME=$${__ENI_NAME__}
       FQDN="$${HOSTNAME}.${domain}"
@@ -66,7 +66,8 @@ write_files:
       __ENI_NAME__=$(aws ec2 describe-network-interfaces --filters "Name=tag:Reference,Values=${eni_reference}" "Name=subnet-id,Values=$${__SUBNET_ID__}" --output json --query "NetworkInterfaces[0].TagSet[?Key==\`Name\`].Value" | grep -o "[a-z0-9\.-]*")
 
       echo "=== ADD counter to name ==="
-      aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="$${__ENI_NAME__}"
+      ID=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .instanceId`
+      aws ec2 create-tags --resources $${ID} --tags Key=Name,Value="$${__ENI_NAME__}"
 
       echo "=== Disabling source-dest-check ==="
       aws ec2 modify-instance-attribute --instance-id $${__INSTANCE_ID__} --no-source-dest-check &>/dev/null || echo "skipped"
