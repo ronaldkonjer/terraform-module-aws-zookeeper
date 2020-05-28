@@ -2,8 +2,8 @@
 #
 # Cloud-Config template for the Apache Zookeeper instances.
 #
-# Copyright 2016-2020, Frederico Martins
-#   Author: Frederico Martins <http://github.com/fscm>
+# Copyright 2016-2020, Compare Group
+#   Author: Compare Group <http://github.com/comparegroup>
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,9 +19,9 @@ write_files:
       echo "  instance: ${hostname}.${domain}"
       sudo /usr/local/bin/zookeeper_config ${zookeeper_args} -E -S -W 60
       echo "=== All Done ==="
-    path: /tmp/setup_zookeeper.sh
+    path: /root/setup_zookeeper.sh
     permissions: '0755'
 
 runcmd:
-  - /tmp/setup_zookeeper.sh
-  #- rm /tmp/setup_zookeeper.sh
+  - /root/setup_zookeeper.sh
+  #- rm /root/setup_zookeeper.sh
