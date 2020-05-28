@@ -45,9 +45,11 @@ resource "aws_instance" "zookeeper" {
   key_name                    = var.keyname
   subnet_id                   = element(var.subnet_ids, count.index)
   user_data                   = element(data.template_file.zookeeper.*.rendered, count.index)
-  vpc_security_group_ids      = join(var.extra_security_group_ids, aws_security_group.zookeeper.id,
-                                  aws_security_group.zookeeper_intra.id
-                                )
+
+  vpc_security_group_ids      = compact(concat([aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
+//  vpc_security_group_ids      = join(var.extra_security_group_ids, aws_security_group.zookeeper.id,
+//                                  aws_security_group.zookeeper_intra.id
+//                                )
 
   //  [aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   root_block_device {
@@ -123,9 +125,7 @@ resource "aws_launch_configuration" "zookeeper" {
   instance_type               = var.instance_type
   key_name                    = var.keyname
   name_prefix                 = "${var.prefix}${var.name}-"
-  security_groups             = join(var.extra_security_group_ids, aws_security_group.zookeeper.id,
-                                  aws_security_group.zookeeper_intra.id
-                                )
+  security_groups             = compact(concat([aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
   //  [
   //    aws_security_group.zookeeper.id,
   //    aws_security_group.zookeeper_intra.id,
@@ -233,7 +233,8 @@ EOF
 resource "aws_network_interface" "zookeeper" {
   count             = var.use_asg ? var.number_of_instances : 0
   subnet_id         = element(var.subnet_ids, count.index)
-  security_groups   = join(var.extra_security_group_ids, aws_security_group.zookeeper.id)
+  #security_groups   = join(var.extra_security_group_ids, aws_security_group.zookeeper.id)
+  security_groups   = compact(concat([aws_security_group.zookeeper.id], var.extra_security_group_ids))
   #[aws_security_group.zookeeper.id, aws_security_group.zookeeper_intra.id, flatten(var.extra_security_group_ids)]
   source_dest_check = false
   tags              = {
