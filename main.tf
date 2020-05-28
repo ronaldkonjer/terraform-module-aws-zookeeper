@@ -141,12 +141,12 @@ resource "aws_launch_configuration" "zookeeper" {
 }
 
 data "template_file" "zookeeper_asg" {
-  count    = var.use_asg ? var.number_of_instances : 0
+  count    = var.use_asg ? 1 : 0
   template = file("${path.module}/templates/cloud-config/init_asg.tpl")
   vars     = {
     domain         = var.domain
     eni_reference  = "${var.prefix}${var.name}"
-    hostname       = "${var.prefix}${var.name}-${format("%02d", count.index + 1)}"
+    hostname       = "${var.prefix}${var.name}"
     service        = "zookeeper"
     metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)
