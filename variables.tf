@@ -35,7 +35,7 @@ variable "domain" {
 
 variable "extra_security_group_ids" {
   description = "Extra security groups to assign to the Apache Zookeeper instance(s) (e.g.: ['sg-3f983f98'])."
-  default     = ""
+  default     = []
   type        = list(string)
 }
 
