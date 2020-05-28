@@ -38,7 +38,7 @@ write_files:
       for INSTANCE in $(aws autoscaling describe-auto-scaling-instances --query 'AutoScalingInstances[?AutoScalingGroupName!=`null`]|[?contains(AutoScalingGroupName, `${asg_name}`) == `true`].[InstanceId]'  --output text)
       do
         if [[ $${ID} == $INSTANCE ]]; then
-           aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="$${CURRENT_NAME}-$${COUNTER}"
+           aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value="$${CURRENT_NAME}-$(printf "%02d" $${COUNTER})"
         fi
         COUNTER=$[$${COUNTER}+1]
       done
