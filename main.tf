@@ -72,7 +72,7 @@ data "template_file" "zookeeper" {
   vars     = {
     domain         = var.domain
     hostname       = "${var.prefix}${var.name}-${format("%02d", count.index + 1)}"
-    zookeeper_args = "-i ${count.index + 1} -n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : "-m ${var.heap_size}"}"
+    zookeeper_args = "-i ${count.index + 1} -n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : format("-m %$", var.heap_size)}"
   }
 }
 
