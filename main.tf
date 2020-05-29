@@ -150,7 +150,7 @@ data "template_file" "zookeeper_asg" {
     service        = "zookeeper"
     metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)
-    zookeeper_args = "-n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : "-m var.heap_size"}"
+    zookeeper_args = "-n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : format("-m %$", var.heap_size)}"
   }
 }
 
