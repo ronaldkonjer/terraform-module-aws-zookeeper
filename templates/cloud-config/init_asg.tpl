@@ -35,17 +35,6 @@ write_files:
       echo $${HOSTNAME} | sed 's/\.$//' > /etc/hostname
       hostname `cat /etc/hostname`
 
-      cat >/etc/hosts <<EOF
-      # The following lines are desirable for IPv4 capable hosts
-      127.0.0.1 $${FQDN} $${HOSTNAME}
-      127.0.0.1 localhost.localdomain localhost
-      127.0.0.1 localhost4.localdomain4 localhost4
-      # The following lines are desirable for IPv6 capable hosts
-      ::1 $${FQDN} $${HOSTNAME}
-      ::1 localhost.localdomain localhost
-      ::1 localhost6.localdomain6 localhost6
-      EOF
-
     path: /usr/local/bin/hostmod.sh
     permissions: '0755'
   - content: |
