@@ -113,7 +113,3 @@ runcmd:
   - crontab -u ${service} /tmp/crontab
   - rm /tmp/crontab
 
-fqdn: $${HOSTNAME}.${domain}
-hostname: $${HOSTNAME}
-manage_etc_hosts: true
-

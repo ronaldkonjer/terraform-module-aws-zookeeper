@@ -62,15 +62,21 @@ variable "name" {
   type        = string
 }
 
-variable "number_of_instances" {
-  description = "Number of Apache Zookeeper instances."
-  default     = "1"
+variable "cluster_name" {
+  description = "The name of the cluster that will be used for the Apache Zookeeper instance(s)."
+  default     = ""
   type        = string
 }
 
-variable "prefix" {
-  description = "A prefix to prepend to the Apache Zookeeper instance(s) name."
+variable "environment" {
+  description = "The environment name that will be used in the dns and "
   default     = ""
+  type        = string
+}
+
+variable "number_of_instances" {
+  description = "Number of Apache Zookeeper instances."
+  default     = "1"
   type        = string
 }
 
@@ -125,4 +131,41 @@ variable "vpc_id" {
   description = "The VPC ID for the security group(s)."
   type        = string
 }
+
+variable "namespace" {
+  description = "Namespace (e.g. `eg` or `cp`)"
+  type        = string
+}
+
+variable "stage" {
+  description = "Stage (e.g. `prod`, `dev`, `staging`)"
+  type        = string
+}
+
+variable "delimiter" {
+  type        = string
+  default     = "-"
+  description = "Delimiter to be used between `namespace`, `stage`, `name` and `attributes`"
+}
+
+variable "attributes" {
+  type        = list(string)
+  default     = []
+  description = "Additional attributes (e.g. `1`)"
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Additional tags (e.g. map('BusinessUnit`,`XYZ`)"
+}
+
+variable "label_order" {
+  type        = list(string)
+  default     = []
+  description = "The naming order of the id output and Name tag"
+}
+
+
+
 
