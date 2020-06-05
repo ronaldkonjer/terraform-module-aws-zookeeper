@@ -17,8 +17,7 @@ resource "aws_network_interface" "zookeeper" {
 
 resource "aws_eip" "zookeeper" {
   count             = var.use_asg && var.associate_public_ip_address ? var.number_of_instances : 0
-  depends_on        = [
-    aws_network_interface.zookeeper]
+  depends_on        = [aws_network_interface.zookeeper]
   network_interface = element(aws_network_interface.zookeeper.*.id, count.index)
   vpc               = true
 }

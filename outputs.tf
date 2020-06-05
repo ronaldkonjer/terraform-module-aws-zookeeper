@@ -1,15 +1,3 @@
-#
-# Outputs for the Apache Zookeeper terraform module.
-#
-# Copyright 2016-2020, Frederico Martins
-#   Author: Frederico Martins <http://github.com/fscm>
-#
-# SPDX-License-Identifier: MIT
-#
-# This program is free software. You can use it and/or modify it under the
-# terms of the MIT License.
-#
-
 output "fqdn" {
   sensitive = false
   value     = [aws_route53_record.private.*.fqdn]

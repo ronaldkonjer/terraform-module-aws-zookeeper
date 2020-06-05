@@ -16,7 +16,7 @@ write_files:
   - content: |
       #!/bin/bash
       echo "=== Setting up Apache Zookeeper Instance ==="
-      echo "  instance: ${hostname}.${domain}"
+      echo "  instance: ${hostname}.${environment}.${domain}"
       sudo /usr/local/bin/zookeeper_config ${zookeeper_args} -E -S -W 60
       echo "=== All Done ==="
     path: /root/setup_zookeeper.sh

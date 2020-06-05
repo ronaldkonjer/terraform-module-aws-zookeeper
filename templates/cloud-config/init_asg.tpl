@@ -68,7 +68,7 @@ write_files:
       aws ec2 attach-network-interface --network-interface-id $${__ENI_ID__} --instance-id $${__INSTANCE_ID__} --device-index 1
 
       echo "=== Setting up Apache Zookeeper Instance ==="
-      echo "  instance: $${__ENI_NAME__}.${domain}"
+      echo "  instance: $${__ENI_NAME__}.${environment}.${domain}"
       sudo /usr/local/bin/zookeeper_config -i $(echo '${zookeeper_addr}' | sed -r -n -e "s/.*(([0-9]+):$${__ENI_IP__}).*/\2/p" ) ${zookeeper_args} -E -S -W 60
 
       echo "=== All Done ==="
