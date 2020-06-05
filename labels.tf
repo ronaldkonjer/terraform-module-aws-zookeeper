@@ -3,7 +3,7 @@ module "label" {
   namespace  = var.namespace
   stage      = var.stage
   environment = var.environment
-  name       = var.cluster_name
+  name       = var.name
   delimiter  = var.delimiter
   attributes = var.attributes
   tags       = var.tags

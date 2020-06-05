@@ -1,6 +1,6 @@
 
 resource "aws_security_group" "zookeeper" {
-  name   = "${module.label.id}-${var.name}"
+  name   = module.label.id
   vpc_id = var.vpc_id
   ingress {
     from_port = 2181
@@ -14,7 +14,7 @@ resource "aws_security_group" "zookeeper" {
   tags   = merge(
   module.label.tags,
   {
-    Name      = "${module.label.id}-${var.name}"
+    Name      = module.label.id
     Zookeeper = "true"
     Service   = "Zookeeper"
   }
@@ -22,7 +22,7 @@ resource "aws_security_group" "zookeeper" {
 }
 
 resource "aws_security_group" "zookeeper_intra" {
-  name   = "${module.label.id}-${var.name}-intra"
+  name   = "${module.label.id}-intra"
   vpc_id = var.vpc_id
   ingress {
     from_port = 2888
@@ -49,7 +49,7 @@ resource "aws_security_group" "zookeeper_intra" {
   tags   = merge(
   module.label.tags,
   {
-    Name      = "${module.label.id}-${var.name}-intra"
+    Name      = "${module.label.id}-intra"
     Zookeeper = "true"
     Service   = "Zookeeper"
   }
@@ -57,7 +57,7 @@ resource "aws_security_group" "zookeeper_intra" {
 }
 
 resource "aws_security_group" "zookeeper_monit" {
-  name   = "${module.label.id}-${var.name}-monit"
+  name   = "${module.label.id}-monit"
   vpc_id = var.vpc_id
   ingress {
     from_port = 7199
@@ -71,7 +71,7 @@ resource "aws_security_group" "zookeeper_monit" {
   tags   = merge(
   module.label.tags,
   {
-    Name      = "${module.label.id}-${var.name}-monit"
+    Name      = "${module.label.id}-monit"
     Zookeeper = "true"
     Service   = "Zookeeper"
   }

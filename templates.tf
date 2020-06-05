@@ -1,11 +1,10 @@
-
 data "template_file" "zookeeper" {
   count    = var.use_asg ? 0 : var.number_of_instances
   template = file("${path.module}/templates/cloud-config/init.tpl")
   vars     = {
     domain         = var.domain
     environment    = var.environment
-    hostname       = "${module.label.id}-${var.name}-${format("%02d", count.index + 1)}"
+    hostname       = "${module.label.id}-${format("%02d", count.index + 1)}"
     zookeeper_args = "-i ${count.index + 1} -n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : format("-m %s", var.heap_size)}"
   }
 }
@@ -14,9 +13,10 @@ data "template_file" "zookeeper_id" {
   count    = var.number_of_instances
   template = "$${index}:$${hostname}.$${environment}.$${domain}"
   vars     = {
-    domain   = var.domain
-    hostname = "${module.label.id}-${var.name}-${format("%02d", count.index + 1)}"
-    index    = count.index + 1
+    domain      = var.domain
+    environment = var.environment
+    hostname    = "${module.label.id}-${format("%02d", count.index + 1)}"
+    index       = count.index + 1
   }
 }
 
@@ -27,8 +27,8 @@ data "template_file" "zookeeper_asg" {
   vars     = {
     domain         = var.domain
     environment    = var.environment
-    eni_reference  = "${module.label.id}-${var.name}"
-    hostname       = "${module.label.id}-${var.name}"
+    eni_reference  = module.label.id
+    hostname       = module.label.id
     service        = "zookeeper"
     metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)

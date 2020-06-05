@@ -1,11 +1,11 @@
 
 resource "aws_iam_instance_profile" "zookeeper_eni" {
-  name = "${module.label.id}-${var.name}-eni"
+  name = "module.label.id-eni"
   role = aws_iam_role.zookeeper_eni.id
 }
 
 resource "aws_iam_role" "zookeeper_eni" {
-  name               = "${module.label.id}-${var.name}-eni"
+  name               = "${module.label.id}-eni"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -25,7 +25,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "zookeeper_eni" {
-  name   = "${module.label.id}-${var.name}-eni"
+  name   = "${module.label.id}-eni"
   role   = aws_iam_role.zookeeper_eni.id
   policy = <<EOF
 {

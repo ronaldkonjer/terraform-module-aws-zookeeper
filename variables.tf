@@ -50,12 +50,6 @@ variable "name" {
   type        = string
 }
 
-variable "cluster_name" {
-  description = "The name of the cluster that will be used for the Apache Zookeeper instance(s)."
-  default     = ""
-  type        = string
-}
-
 variable "environment" {
   description = "The environment name that will be used in the dns and "
   default     = ""

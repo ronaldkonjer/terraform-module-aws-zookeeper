@@ -19,7 +19,7 @@ resource "aws_instance" "zookeeper" {
   tags = merge(
   module.label.tags,
   {
-    Name      = "${module.label.id}-${var.name}-${format("%02d", count.index + 1)}"
+    Name      = "${module.label.id}-${format("%02d", count.index + 1)}"
     Zookeeper = "true"
     Service   = "Zookeeper"
   }

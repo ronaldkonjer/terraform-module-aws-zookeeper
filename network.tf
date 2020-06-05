@@ -7,8 +7,8 @@ resource "aws_network_interface" "zookeeper" {
   tags              =merge(
   module.label.tags,
   {
-    Name      = "${module.label.id}-${var.name}-${format("%02d", count.index + 1)}"
-    Reference = "${module.label.id}-${var.name}"
+    Name      = "${module.label.id}-${format("%02d", count.index + 1)}"
+    Reference = module.label.id
     Zookeeper = "true"
     Service   = "Zookeeper"
   }

@@ -7,14 +7,14 @@ resource "aws_autoscaling_group" "zookeeper" {
   launch_configuration      = aws_launch_configuration.zookeeper.name
   max_size                  = var.number_of_instances
   min_size                  = var.number_of_instances
-  name                      = "${module.label.id}-${var.name}"
+  name                      = module.label.id
   vpc_zone_identifier       = slice(var.subnet_ids, 0, var.number_of_instances)
   lifecycle {
     create_before_destroy = true
   }
   tag {
     key                 = "Name"
-    value               = "${module.label.id}-${var.name}"
+    value               = module.label.id
     propagate_at_launch = true
   }
   tag {
@@ -35,7 +35,7 @@ resource "aws_launch_configuration" "zookeeper" {
   image_id                    = data.aws_ami.zookeeper.id
   instance_type               = var.instance_type
   key_name                    = var.keyname
-  name                        = "${module.label.id}-${var.name}"
+  name                        = module.label.id
   security_groups             = compact(concat([
     aws_security_group.zookeeper.id,
     aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
