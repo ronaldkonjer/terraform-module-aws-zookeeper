@@ -4,7 +4,7 @@ data "template_file" "zookeeper" {
   vars     = {
     domain         = var.domain
     environment    = var.environment
-    hostname       = "${module.label.id}-${format("%02d", count.index + 1)}"
+    hostname       = "${module.label.name}-${format("%02d", count.index + 1)}"
     zookeeper_args = "-i ${count.index + 1} -n ${join(",", data.template_file.zookeeper_id.*.rendered)} ${var.heap_size == "" ? var.heap_size : format("-m %s", var.heap_size)}"
   }
 }
@@ -15,7 +15,7 @@ data "template_file" "zookeeper_id" {
   vars     = {
     domain      = var.domain
     environment = var.environment
-    hostname    = "${module.label.id}-${format("%02d", count.index + 1)}"
+    hostname    = "${module.label.name}-${format("%02d", count.index + 1)}"
     index       = count.index + 1
   }
 }
@@ -28,7 +28,7 @@ data "template_file" "zookeeper_asg" {
     domain         = var.domain
     environment    = var.environment
     eni_reference  = module.label.id
-    hostname       = module.label.id
+    hostname       = module.label.name
     service        = "zookeeper"
     metric         = "ZookeeperStatus"
     zookeeper_addr = join(",", data.template_file.zookeeper_asg_addr.*.rendered)
