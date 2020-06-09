@@ -1,6 +1,6 @@
 
 resource "aws_iam_instance_profile" "zookeeper_eni" {
-  name = "module.label.id-eni"
+  name = "${module.label.id}-eni"
   role = aws_iam_role.zookeeper_eni.id
 }
 
