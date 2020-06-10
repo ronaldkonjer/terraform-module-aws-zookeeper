@@ -35,9 +35,11 @@ resource "aws_launch_configuration" "zookeeper" {
   image_id                    = data.aws_ami.zookeeper.id
   instance_type               = var.instance_type
   key_name                    = var.keyname
-  name                        = module.label.id
   security_groups             = compact(concat([
     aws_security_group.zookeeper.id,
     aws_security_group.zookeeper_intra.id], var.extra_security_group_ids))
   user_data                   = data.template_file.zookeeper_asg[0].rendered
+  lifecycle {
+    create_before_destroy = true
+  }
 }
